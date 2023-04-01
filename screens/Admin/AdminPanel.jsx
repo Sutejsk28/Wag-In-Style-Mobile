@@ -5,14 +5,21 @@ import Header from '../../components/Header'
 import Loading from '../../components/Loading'
 import ButtonBox from '../../components/ButtonBox'
 import ProductListHeading from '../../components/ProductListHeading'
-import { products } from '../Home'
 import ProductListItem from '../../components/ProductListItem'
 import Chart from '../../components/Chart'
+import { useAdminProducts, useMessageAndErrorOther } from '../../utils/hooks'
+import { useDispatch } from 'react-redux'
+import { useIsFocused } from '@react-navigation/native'
+import { deleteProduct } from '../../redux/actions/otherActions'
+import { getAdminProducts } from '../../redux/actions/productActions'
 
 const AdminPanel = ({navigation}) => {
+    
+    const dispatch = useDispatch()
+    const isFocused = useIsFocused()
 
-    const loading=false
-
+    const {loading, products, inStock, outOfStock}= useAdminProducts(dispatch,isFocused)
+    
     const navigationHandler = (text)=>{
         switch (text) {
             case "Category":
@@ -30,8 +37,10 @@ const AdminPanel = ({navigation}) => {
     }
 
     const deleteProductHandler = (id)=>{
-        console.log("Deleting product with ID: ", id);
+        dispatch(deleteProduct(id))
     }
+
+    const loadingDelete = useMessageAndErrorOther(dispatch,null,null,getAdminProducts)
 
   return (
     <View
@@ -58,7 +67,7 @@ const AdminPanel = ({navigation}) => {
                         }}
                     >
 
-                    <Chart inStock={12} outOfStock={2} />
+                    <Chart inStock={inStock} outOfStock={outOfStock} />
 
                     </View>
                     <View>
@@ -94,7 +103,7 @@ const AdminPanel = ({navigation}) => {
                         showsVerticalScrollIndicator={false}
                     >
                         <View>
-                            {
+                            { !loadingDelete &&
                                 products.map((item,index)=>(
                                     <ProductListItem
                                         navigate={navigation}

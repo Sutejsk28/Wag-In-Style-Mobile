@@ -6,51 +6,97 @@ import Heading from '../components/Heading'
 import { Button } from 'react-native-paper'
 import CartItem from '../components/CartItem'
 import { useNavigation } from '@react-navigation/native'
+import { useDispatch, useSelector } from 'react-redux'
+import { Toast } from 'react-native-toast-message/lib/src/Toast'
 
-export const cartItems = [
-    {
-        name: "Macbook",
-        image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        product: "product1",
-        stock: 4,
-        price: 4999,
-        quantity: 2,
-    },
-    {
-        name: "Lenovo",
-        image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        product: "product2",
-        stock: 4,
-        price: 4999,
-        quantity: 2,
-    },
-    {
-        name: "HP",
-        image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        product: "product3",
-        stock: 4,
-        price: 4999,
-        quantity: 2,
-    },
-    {
-        name: "DELL",
-        image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        product: "product4",
-        stock: 4,
-        price: 4999,
-        quantity: 2,
-    },
-]
+// export const cartItems = [
+//     {
+//         name: "Macbook",
+//         image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
+//         product: "product1",
+//         stock: 4,
+//         price: 4999,
+//         quantity: 2,
+//     },
+//     {
+//         name: "Lenovo",
+//         image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
+//         product: "product2",
+//         stock: 4,
+//         price: 4999,
+//         quantity: 2,
+//     },
+//     {
+//         name: "HP",
+//         image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
+//         product: "product3",
+//         stock: 4,
+//         price: 4999,
+//         quantity: 2,
+//     },
+//     {
+//         name: "DELL",
+//         image: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
+//         product: "product4",
+//         stock: 4,
+//         price: 4999,
+//         quantity: 2,
+//     },
+// ]
 
 const Cart = () => {
 
     const navigate = useNavigation()
+    const dispatch = useDispatch()
 
-    const incrementHandler = (id, qty, stock)=>{
-        console.log("Increasing.. ",id, qty, stock);
+    const {cartItems} = useSelector((state)=>state.cart)
+
+    const incrementHandler = (id, name, price, image, stock, quantity)=>{
+        const newQty = quantity+1;
+
+        if(stock<=quantity) return Toast.show({
+            type: "error",
+            text1: "Out Of Stock",
+            text2: `${name} are out of stock`
+        });
+
+        dispatch({
+            type: "addToCart",
+            payload: {
+                product: id,
+                name,
+                price,
+                image,
+                stock,
+                quantity: newQty,
+            }
+        })
+
+        Toast.show({
+            type: "success",
+            text1: "Item added to cart",
+        })
     }
-    const decrementHandler = (id, qty)=>{
-        console.log("Decreasing.. ",id, qty);
+    const decrementHandler = (id, name,price,image, stock, quantity)=>{
+        
+        const newQty = quantity-1;
+
+        if (1 >= quantity) return dispatch({
+            type: "removeFromCart",
+            payload: id,
+        })
+
+        dispatch({
+            type: "addToCart",
+            payload: {
+                product: id,
+                name,
+                price,
+                image,
+                stock,
+                quantity: newQty,
+            }
+        })
     }
     
   return (
@@ -78,7 +124,7 @@ const Cart = () => {
         >
             <ScrollView showsVerticalScrollIndicator={false} >
                 {
-                    cartItems.map((item,index)=>(
+                    cartItems.length > 0 ? cartItems.map( (item,index)=>(
                         <CartItem
                             navigate={navigate}
                             key={item.product}
@@ -93,6 +139,14 @@ const Cart = () => {
                             decrementHandler={decrementHandler}
                         />
                     ))
+                    : (
+                        <Text
+                            style={{
+                                textAlign: "center",
+                                fontSize: 18,
+                            }}
+                        >No Items Yet</Text>
+                    )
                 }
             </ScrollView>
         </View>
@@ -104,8 +158,14 @@ const Cart = () => {
                 paddingHorizontal: 35,
             }}
         >
-            <Text>5 Items</Text>
-            <Text>{RUPEE} 5</Text>
+            <Text>{cartItems.length} Items</Text>
+            <Text>
+                {RUPEE} 
+                {cartItems.reduce( 
+                    (prev,curr) => prev + curr.quantity*curr.price,
+                    0
+                )}
+            </Text>
         </View>
         
         <TouchableOpacity

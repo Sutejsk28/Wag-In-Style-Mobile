@@ -1,81 +1,70 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { colors, defaultStyle } from '../styles/styles'
 import Header from '../components/Header'
 import { Avatar, Button } from 'react-native-paper'
 import SearchModal from '../components/SearchModal'
 import ProductCard from '../components/ProductCard'
-import { useNavigation } from '@react-navigation/native'
+import { useIsFocused, useNavigation } from '@react-navigation/native'
 import Footer from '../components/Footer'
 import Heading from '../components/Heading'
-
-
-const categories = [
-    {category: "Football", _id: "1"},
-    {category: "baseBall", _id: "2"},
-    {category: "cricket", _id: "3"},
-    {category: "Basketball", _id: "4"},        
-    {category: "badminton", _id: "5"},
-];
-
-export const products = [
-    {
-        name: "product1", 
-        price: 250, 
-        stock: 23,
-        _id: "1",
-        images:[{
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg"
-        }],
-        category: "c1",
-    },
-    {
-        name: "product2", 
-        price: 250, 
-        stock: 23,
-        _id: "2",
-        images:[{
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg"
-        }],
-        category: "c1",
-    },
-    {
-        name: "product3", 
-        price: 250, 
-        stock: 23,
-        _id: "3",
-        images:[{
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg"
-        }],
-        category: "c1",
-    },
-    {
-        name: "product4", 
-        price: 250, 
-        stock: 23,
-        _id: "4",
-        images:[{
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg"
-        }],
-        category: "c1",
-    },
-]
+import { useDispatch, useSelector } from 'react-redux'
+import { getAllProducts } from '../redux/actions/productActions'
+import { useSetCategories } from '../utils/hooks'
+import { Toast } from 'react-native-toast-message/lib/src/Toast'
 
 const Home = () => {
 
-    const [category, setCategory] = useState("1")
+    const [category, setCategory] = useState()
     const [activeSearch, setActiveSearch] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
+    const [categories, setCategories] = useState([])
 
     const navigate = useNavigation()
+    const dispatch = useDispatch()
+    const isFocused = useIsFocused()
+
+    const { products } = useSelector((state)=> state.product)
 
     const categoryButtonHandler = (id) => {
         setCategory(id)
     }
 
-    const addToCartHandler = ()=>{
-        console.log("add to cart");
+    const addToCartHandler = (id, name, price, image, stock)=>{
+        if (stock===0) return Toast.show({
+            type: "error",
+            text1: "Out Of Stock",
+            text2: `${name} are out of stock`
+        })
+        dispatch({
+            type: "addToCart",
+            payload: {
+                product: id,
+                name,
+                price,
+                image,
+                stock,
+                quantity: 1,
+            }
+        })
+        Toast.show({
+            type: "success",
+            text1: "Item added to cart"
+        })
     }
+
+    useSetCategories(setCategories, isFocused)
+
+    useEffect(()=>{
+        const timeOutId = setTimeout(()=>{
+            dispatch(getAllProducts(searchQuery, category))
+        }, 500)
+
+        return ()=>{
+            clearTimeout(timeOutId)
+        }
+
+    },[dispatch,searchQuery,category, isFocused])
 
   return (
 
@@ -175,7 +164,7 @@ const Home = () => {
                     {
                         products.map((product,index)=>(
                             <ProductCard
-                                stock={product.stocks}
+                                stock={product.stock}
                                 name={product.name}
                                 price={product.price}
                                 image={product.images[0].url}

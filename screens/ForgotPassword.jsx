@@ -3,16 +3,21 @@ import React, { useState } from 'react'
 import { colors, defaultStyle, formHeading, inputOptions, formStyles as styles } from '../styles/styles'
 import { Button, TextInput } from 'react-native-paper'
 import Footer from '../components/Footer'
+import { useDispatch } from 'react-redux'
+import { forgotPassword } from '../redux/actions/otherActions'
+import { useMessageAndErrorOther } from '../utils/hooks'
 
 const ForgotPassword = ({navigation}) => {
 
     const [email,setEmail] = useState("")
 
-    const loading = false;
+
+    const dispatch = useDispatch()
+
+    const loading = useMessageAndErrorOther(dispatch,navigation,"verify")
 
     const submitHandler = ()=>{
-        alert("Yess")
-        navigation.navigate("verify")
+        dispatch(forgotPassword(email))
     }
 
   return (

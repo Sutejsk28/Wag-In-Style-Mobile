@@ -1,10 +1,13 @@
 import { View, Text, Dimensions, Image, StyleSheet, TouchableOpacity } from 'react-native'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { colors, defaultStyle, RUPEE } from '../styles/styles';
 import Header from '../components/Header';
 import Carousel from 'react-native-snap-carousel';
 import { Avatar, Button } from 'react-native-paper';
 import { Toast } from 'react-native-toast-message/lib/src/Toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { useIsFocused } from '@react-navigation/native';
+import { getProductDetails } from '../redux/actions/productActions';
 
 const SLIDER_WIDTH = Dimensions.get("window").width
 const ITEM_WIDTH = SLIDER_WIDTH
@@ -23,30 +26,13 @@ const ProductDetails = ({route : {params}}) => {
     
 
     const isCarousel = useRef(null)
+    const dispatch = useDispatch()
+    const isFocused = useIsFocused()
 
-    const images = [
-        {
-            id: "1",
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        },
-        {
-            id: "2",
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        },
-        {
-            id: "3",
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        },
-        {
-            id: "4",
-            url: "https://cdn.akc.org/content/article-body-image/golden_puppy_dog_pictures.jpg",
-        }
-    ]
+    const {product: {
+        name,price,stock,description, images
+    }} = useSelector((state)=>state.product)
 
-    const name = "Tie"
-    const price = 50
-    const description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-    const stock = 5
     const [quantity,setQuantity] = useState(1)
 
     const decrementQty = () => {
@@ -54,7 +40,11 @@ const ProductDetails = ({route : {params}}) => {
         setQuantity(prev => prev-1)
     }
     const incrementQty = () => {
-        if(quantity >= stock) return;
+        if(quantity >= stock) return Toast.show({
+            type: "error",
+            text1: "max value added",
+            text2: `${name} are out of stock`
+        })
         setQuantity(prev => prev+1)
     }
 
@@ -63,12 +53,28 @@ const ProductDetails = ({route : {params}}) => {
             type: "error",
             text1: "Out Of Stock",
             text2: `${name} are out of stock`
-        }) ;
+        })
+        
+        dispatch({
+            type: "addToCart",
+            payload: {
+                product: params.id,
+                name,
+                price,
+                image: images[0]?.url,
+                stock,
+                quantity,
+            }
+        })
         Toast.show({
             type: "success",
             text1: "Item added to cart",
         })
     }
+
+    useEffect(()=>{
+        dispatch(getProductDetails(params.id))
+    },[dispatch,params.id,isFocused])
 
     return (
         <View

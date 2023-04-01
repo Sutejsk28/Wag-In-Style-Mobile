@@ -3,6 +3,10 @@ import React, { useEffect, useState } from 'react'
 import { colors, defaultStyle, formHeading, inputOptions, formStyles as styles, defaultImg } from '../styles/styles'
 import { Avatar, Button, TextInput } from 'react-native-paper'
 import Footer from '../components/Footer'
+import mime from 'mime'
+import { useDispatch } from 'react-redux'
+import { signup } from '../redux/actions/userActions'
+import { useMessageAndErrorUser } from '../utils/hooks'
 
 const SignUp = ({navigation,route}) => {
 
@@ -15,13 +19,32 @@ const SignUp = ({navigation,route}) => {
     const [country,setCountry] = useState("")
     const [pinCode,setPinCOde] = useState("")
     
-    
-
-    const loading = false;
+    const dispatch = useDispatch()
 
     const submitHandler = ()=>{
-        alert("Yess")
+        const signupForm = new FormData()
+
+        signupForm.append("name", name)
+        signupForm.append("email", email)
+        signupForm.append("password", password)
+        signupForm.append("address", address)
+        signupForm.append("city", city)
+        signupForm.append("country", country)
+        signupForm.append("pinCode", pinCode)
+
+        if(avatar !== "") {
+            signupForm.append("file", {
+                uri: avatar,
+                type: mime.getType(avatar),
+                name: avatar.split("/").pop()
+            })
+        }
+
+        dispatch(signup(signupForm))
+
     }
+
+    const loading = useMessageAndErrorUser(navigation,dispatch,"login")
 
     const disableBtn = !name || !email || !password || !city || !address || !country || !pinCode
 

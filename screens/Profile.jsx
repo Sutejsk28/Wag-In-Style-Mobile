@@ -1,23 +1,30 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { colors, defaultStyle, formHeading } from '../styles/styles'
+import { colors, defaultStyle, formHeading, defaultImg } from '../styles/styles'
 import { Avatar, Button } from 'react-native-paper'
 import ButtonBox from '../components/ButtonBox'
 import Footer from '../components/Footer'
 import Loading from '../components/Loading'
-
-const user = {
-    name: "Sutej",
-    email: "sutejsk28@gmail.com"
-}
+import { useDispatch, useSelector } from 'react-redux'
+import { loadUser, logout } from '../redux/actions/userActions'
+import { useMessageAndErrorOther, useMessageAndErrorUser } from '../utils/hooks'
+import { useIsFocused } from '@react-navigation/native'
+import mime from 'mime'
+import { updatePicture } from '../redux/actions/otherActions'
 
 const Profile = ({navigation, route}) => {
 
-    const [avatar, setAvatar] = useState(null)
-    const loading =false
+    const {user} = useSelector( (state)=>state.user )
+    
+    const [avatar, setAvatar] = useState(defaultImg)
+ 
+    const dispatch = useDispatch()
+    const isFocused = useIsFocused()
+
+    const loading = useMessageAndErrorUser(navigation,dispatch,"login")
 
     const logoutHandler = () => {
-        console.log("Signing out...");
+        dispatch(logout())
     }
 
     const navigationHandler = (text) => {
@@ -42,11 +49,27 @@ const Profile = ({navigation, route}) => {
         }
     }
 
+    const loadingPicture = useMessageAndErrorOther(dispatch,null,null,loadUser)
+
     useEffect(()=>{
         if(route.params?.image){
             setAvatar(route.params.image)
-        }         
-    },[route.params])
+            const imageForm = new FormData()
+            imageForm.append("file",{
+                uri: route.params.image,
+                type: mime.getType(route.params.image),
+                name: route.params.image.split("/").pop()
+            })
+            dispatch(updatePicture(imageForm))
+        }
+        dispatch(loadUser())   
+    },[route.params, dispatch, isFocused])
+
+    useEffect(()=>{
+        if(user?.avatar){
+            setAvatar(user.avatar?.url) 
+        }
+    },[user])
 
   return (
     <>
@@ -75,8 +98,16 @@ const Profile = ({navigation, route}) => {
                                     uri: avatar
                                 }}
                             />
-                            <TouchableOpacity onPress={()=>navigation.navigate("camera", {updateProfile: true})} >
-                                <Button textColor={colors.color2} >Change Photo</Button>
+                            <TouchableOpacity
+                                disabled={loadingPicture} 
+                                onPress={()=>navigation.navigate("camera", {updateProfile: true})} >
+                                    <Button 
+                                        disabled={loadingPicture} 
+                                        loading={loadingPicture}
+                                        textColor={colors.color2} 
+                                    >
+                                        Change Photo
+                                    </Button>
                             </TouchableOpacity>
 
                             <Text style={styles.nameText} >
@@ -96,7 +127,7 @@ const Profile = ({navigation, route}) => {
                                     margin: 10,
                                     marginTop: 40,
                                     paddingTop: 40,
-                                    justifyContent: "space-between",
+                                    justifyContent: "space-evenly",
                                 }}
                             >
                                 <ButtonBox 
@@ -104,12 +135,16 @@ const Profile = ({navigation, route}) => {
                                     text={"Orders"}
                                     icon={"format-list-bulleted-square"}
                                 />
-                                <ButtonBox
-                                    handler={navigationHandler}
-                                    text={"Admin"}
-                                    icon={"view-dashboard"}
-                                    reverse={true}
-                                />
+                                {
+                                    user?.role === "admin" && (
+                                        <ButtonBox
+                                            handler={navigationHandler}
+                                            text={"Admin"}
+                                            icon={"view-dashboard"}
+                                            reverse={true}
+                                        />
+                                    )
+                                }
                                 <ButtonBox
                                     handler={navigationHandler}
                                     text={"Profile"}

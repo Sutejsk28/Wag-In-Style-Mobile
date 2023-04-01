@@ -1,25 +1,121 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
+import Loading from '../components/Loading'
 import { colors, defaultStyle } from '../styles/styles'
 import Header from '../components/Header'
 import Heading from '../components/Heading'
 import { Button, RadioButton } from 'react-native-paper'
+import { useDispatch, useSelector } from 'react-redux'
+import { placeOrder } from '../redux/actions/otherActions'
+import {useMessageAndErrorOther} from '../utils/hooks'
+import {useStripe} from '@stripe/stripe-react-native'
+import { Toast } from 'react-native-toast-message/lib/src/Toast'
+import axios from 'axios'
+import {server} from '../redux/store'
 
 const Payment = ({navigation, route}) => {
 
     const [paymetMethod, setPaymetMethod] = useState("COD")
-    console.log(paymetMethod);
+    const [loaderLoading,setLoaderLoading] = useState(false)
 
 
-    const isAuthenticated = false
+    const dispatch = useDispatch()
+    const stripe = useStripe()
+
+    const {isAuthenticated, user} = useSelector((state)=>state.user)
+    const {cartItems} = useSelector((state)=>state.cart)
 
     const redirectToLogin = ()=>{
         navigation.navigate("login")
     }
-    const codHandler = ()=>{}
-    const onlineHandler = () => {}
+    const codHandler = (paymentInfo)=>{
+        const shippingInfo = {
+            address: user.address,
+            city: user.city,
+            country: user.country,
+            pinCode: user.pinCode,
+        }
+        const itemsPrice = route.params.itemsPrice;
+        const shippingCharges = route.params.shippingCharges;
+        const taxPrice = route.params.tax;
+        const totalAmount = route.params.totalAmount;
+
+        dispatch(
+            placeOrder(
+                shippingInfo, 
+                cartItems, 
+                paymetMethod, 
+                itemsPrice, 
+                taxPrice, 
+                shippingCharges, 
+                totalAmount, 
+                paymentInfo
+            )
+        )
+    }
+    const onlineHandler = async () => {
+        try {
+            
+            const {
+                data: {client_secret}
+            } = await axios.post(`${server}/order/payment`, {
+                totalAmount: route.params.totalAmount,
+            },{
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                withCredentials: true,
+            })
+
+            const init = await stripe.initPaymentSheet({
+                paymentIntentClientSecret: client_secret,
+                merchantDisplayName: "Wag In Style Store"
+            })
+
+            if(init.error) return Toast.show({
+                type: "error",
+                text1: init.error.message,
+            })
+
+            const presentSheet = await stripe.presentPaymentSheet()
+            setLoaderLoading(true)
+
+            if(presentSheet.error) {
+                setLoaderLoading(false)
+                return Toast.show({
+                    type: "error",
+                    text1: presentSheet.error.message,
+                })
+            }
+
+            const {paymentIntent} = await stripe.retrievePaymentIntent(
+                client_secret
+            )
+
+            if(paymentIntent.status === "Succeeded") {
+                codHandler({id: paymentIntent.id, status: paymentIntent.status})
+            }
+
+        } catch (error) {
+            return Toast.show({
+                type: "error",
+                text1: "Some Error has occured",
+                text2: error
+            })
+        }
+    }
+
+    const loading = useMessageAndErrorOther(
+        dispatch, 
+        navigation, 
+        "profile",
+        ()=>({
+            type: "clearCart"
+        })
+    )
 
   return (
+    loaderLoading ? <Loading /> : (
     <View 
         style={defaultStyle}
     >
@@ -49,10 +145,19 @@ const Payment = ({navigation, route}) => {
       </View>
 
       <TouchableOpacity
-        onPress={ !isAuthenticated? redirectToLogin: paymetMethod==="COD"? codHandler: onlineHandler }
+        disabled={loading}
+        onPress={ 
+            !isAuthenticated 
+            ? redirectToLogin 
+            : paymetMethod==="COD" 
+            ? ()=>codHandler()
+            : onlineHandler 
+        }
       >
             <Button 
                 style={styles.btn} 
+                loading={loading}
+                disabled={loading}
                 textColor={colors.color2}
                 icon={
                     paymetMethod==="COD" ? "check-circle" : "circle-multiple-outline"
@@ -65,6 +170,7 @@ const Payment = ({navigation, route}) => {
       </TouchableOpacity>
 
     </View>
+    )
   )
 }
 

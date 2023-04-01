@@ -31,7 +31,8 @@ const ProductListItem = ({
                 <View
                     style={{
                         ...styles.container,
-                        backgroundColor: i%2===0 ? colors.color1: colors.color3, 
+                        backgroundColor: i%2===0 ? colors.color1: colors.color3,
+                        justifyContent: "space-between" 
                         
                     }}
                 >
@@ -48,6 +49,7 @@ const ProductListItem = ({
                     <Text
                         style={{
                             width: 60,
+                            marginLeft: 20,
                             color: colors.color2
                         }}
                         numberOfLines={1}
@@ -65,12 +67,13 @@ const ProductListItem = ({
                     </Text>
                     <Text
                         style={{
-                            width: 60,
+                            width: 40,
+                            marginLeft: 10,
                             color: colors.color2
                         }}
                         numberOfLines={1}
                     >
-                        {category}
+                        {category? category.category : ""}
                     </Text>
                     <Text
                         style={{

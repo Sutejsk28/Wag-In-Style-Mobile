@@ -4,7 +4,7 @@ import { colors } from '../styles/styles'
 import { Button } from 'react-native-paper'
 
 const ProductCard = ({
-    stocks,
+    stock,
     name,
     price,
     image,
@@ -20,8 +20,8 @@ const ProductCard = ({
     >
         <View
             style={{
-                elevation: 5,
-                width: 220,
+                elevation: 15,
+                width: 250,
                 alignItems: "center",
                 justifyContent: "space-between",
                 margin: 20,
@@ -56,7 +56,8 @@ const ProductCard = ({
                     style={{
                         color: i%2===0 ? colors.color2 : colors.color2,
                         fontSize: 25,
-                        fontWeight: "300"
+                        fontWeight: "300",
+                        width: "60%",
                     }}
                 >
                     {name}
@@ -80,6 +81,7 @@ const ProductCard = ({
                 style={{
                     backgroundColor: i%2===0 ? colors.color3 : colors.color2,
                     borderRadius: 0,
+                    paddingVertical: 10,
                     borderBottomLeftRadius: 20,
                     borderBottomRightRadius: 20,
                     width: "100%",
@@ -88,7 +90,7 @@ const ProductCard = ({
             >
                 <Button 
                     textColor={i%2===0 ? colors.color2 : colors.color3} 
-                    onPress={()=>addToCartHandler(id,stocks)}
+                    onPress={()=>addToCartHandler(id, name, price, image, stock)}
                 >
                     Add to Cart
                 </Button>

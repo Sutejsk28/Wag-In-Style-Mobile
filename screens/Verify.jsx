@@ -3,17 +3,22 @@ import React, { useState } from 'react'
 import { colors, defaultStyle, formHeading, inputOptions, formStyles as styles } from '../styles/styles'
 import { Button, TextInput } from 'react-native-paper'
 import Footer from '../components/Footer'
+import { useMessageAndErrorOther } from '../utils/hooks'
+import { useDispatch } from 'react-redux'
+import { resetPassword } from '../redux/actions/otherActions'
 
 const Verify = ({navigation}) => {
 
     const [otp,setOtp] = useState("")
     const [password,setPassword] = useState("")
 
-    const loading = false;
+
+    const dispatch = useDispatch()
+
+    const loading = useMessageAndErrorOther(dispatch,navigation,"login");
 
     const submitHandler = ()=>{
-        alert("Yess")
-        navigation.navigate("login")
+        dispatch(resetPassword(otp,password))
     }
 
   return (
@@ -36,6 +41,7 @@ const Verify = ({navigation}) => {
                     {...inputOptions}
                     placeholder="otp"
                     keyboardType="number-pad"
+                    secureTextEntry={true}
                     value={otp}
                     onChangeText={setOtp}
                 />

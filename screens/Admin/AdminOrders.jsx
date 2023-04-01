@@ -5,16 +5,22 @@ import Header from '../../components/Header'
 import Loading from '../../components/Loading'
 import { Headline } from 'react-native-paper'
 import OrderItem from '../../components/OrderItem'
-import { orders } from '../Orders'
+import { useGetOrders, useMessageAndErrorOther } from '../../utils/hooks'
+import { useIsFocused } from '@react-navigation/native'
+import { useDispatch } from 'react-redux'
+import { processOrder } from '../../redux/actions/otherActions'
 
-const AdminOrders = () => {
+const AdminOrders = ({navigation}) => {
 
-    const loading = false
+   
+    const isFocused = useIsFocused()
+    const dispatch = useDispatch()
+    const {loading, orders} = useGetOrders(isFocused, true)
 
-    const processOrderLoading = false;
+    const processOrderLoading = useMessageAndErrorOther(dispatch,navigation,"adminpanel");
 
-    const updateHandler = ()=> {
-
+    const updateHandler = (id)=> {
+        dispatch(processOrder(id))
     }
 
   return (

@@ -5,52 +5,14 @@ import Header from '../components/Header'
 import Loading from '../components/Loading'
 import { Headline } from 'react-native-paper'
 import OrderItem from '../components/OrderItem'
-
-export const orders = [
-    {
-    _id: "1",
-    shippingInfo: {
-        address: "217/18A Ganesh Marg",
-        city: "Belagavi",
-        country: "India",
-        pinCode: 590006
-    },
-    createdAt: "12-2-2023T245",
-    orderStatus: "Processing",
-    paymentMethod: "COD",
-    totalAmount: 2000,
-    },
-    {
-        _id: "2",
-        shippingInfo: {
-            address: "217/18A Ganesh Marg",
-            city: "Belagavi",
-            country: "India",
-            pinCode: 590006
-        },
-        createdAt: "12-2-2023T245",
-        orderStatus: "Processing",
-        paymentMethod: "COD",
-        totalAmount: 2000,
-    },
-    {
-        _id: "3",
-        shippingInfo: {
-            address: "217/18A Ganesh Marg",
-            city: "Belagavi",
-            country: "India",
-            pinCode: 590006
-        },
-        createdAt: "12-2-2023T245",
-        orderStatus: "Processing",
-        paymentMethod: "COD",
-        totalAmount: 2000,
-    },
-]
+import { useGetOrders } from '../utils/hooks'
+import { useIsFocused } from '@react-navigation/native'
 
 const Orders = () => {
 
-    const loading = false
+
+    const isFocused = useIsFocused()
+    const {loading, orders} = useGetOrders(isFocused)
 
   return (
     <View

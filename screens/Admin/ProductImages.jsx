@@ -4,6 +4,10 @@ import { colors, defaultStyle, formHeading } from '../../styles/styles'
 import Header from '../../components/Header'
 import ImageCard from '../../components/ImageCard'
 import { Avatar, Button } from 'react-native-paper'
+import { useMessageAndErrorOther } from '../../utils/hooks'
+import { useDispatch } from 'react-redux'
+import mime from 'mime'
+import { deleteProductImage, updateProductImage } from '../../redux/actions/otherActions'
 
 const ProductImages = ({navigation, route}) => {
 
@@ -13,9 +17,25 @@ const ProductImages = ({navigation, route}) => {
     const [image,setImage] = useState(null) 
     const [imageChanged,setImageChanged] = useState(false)
 
-    const loading = false
+    const dispatch = useDispatch()
 
-    const submitHandler = ()=>{}
+
+    const loading = useMessageAndErrorOther(dispatch,navigation,"adminpanel")
+
+    const deleteHandler = (imageId)=>{
+        dispatch(deleteProductImage(productId,imageId))
+    }
+
+    const submitHandler = ()=>{
+        const imageForm = new FormData()
+        imageForm.append("file", {
+            uri: image,
+            type: mime.getType(image),
+            name: image.split("/").pop()
+        })
+
+        dispatch(updateProductImage(productId, imageForm))
+    }
 
     useEffect(()=>{
         if(route.params?.image){
@@ -24,10 +44,6 @@ const ProductImages = ({navigation, route}) => {
         }         
     },[route.params])
 
-    const deleteHandler = (id)=>{
-        console.log("Image id", id);
-        console.log("Product Id", productId);
-    }
 
   return (
     <View

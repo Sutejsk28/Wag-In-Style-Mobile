@@ -5,28 +5,49 @@ import Header from '../../components/Header'
 import Loading from '../../components/Loading'
 import { Avatar, Button, TextInput } from 'react-native-paper'
 import SelectComponent from '../../components/SelectComponent'
+import { useMessageAndErrorOther, useSetCategories } from '../../utils/hooks'
+import { useDispatch } from 'react-redux'
+import { useIsFocused } from '@react-navigation/native'
+import mime from 'mime'
+import { addProduct } from '../../redux/actions/otherActions'
 
 const NewProduct = ({navigation , route}) => {
 
-    const loading = false
+    const dispatch = useDispatch()
+    const isFocused = useIsFocused()
+    const [visible,setVisible] = useState(false)
 
     const [image,setImage] = useState("")
     const [name,setName] = useState("")
     const [description,setDescription] = useState("")
     const [price,setPrice] = useState("")
     const [stock,setStock] = useState("")
-    const [category,setCategory] = useState("Tie")
-    const [categoryID,setCategoryID] = useState("")
-    const [categories,setCategories] = useState([
-        {_id: "1", category: "Tie"},
-        {_id: "2", category: "Hat"},
-        {_id: "3", category: "Shoes"},
-    ])
-    const [visible,setVisible] = useState(false)
+    const [category,setCategory] = useState("Choose Category")
+    const [categoryID,setCategoryID] = useState(undefined)
+    const [categories,setCategories] = useState([])
+
+    useSetCategories(setCategories,isFocused)
+
+    const disableCondition = !name || !description || !price || !stock || !image;
 
     const submitHandler = ()=> {
-        console.log(name,description,price,stock,categoryID);
+        const newProductForm = new FormData()
+        newProductForm.append("name", name)
+        newProductForm.append("description", description)
+        newProductForm.append("price", price)
+        newProductForm.append("stock", stock)
+        newProductForm.append("file", {
+            uri: image,
+            type: mime.getType(image),
+            name: image.split("/").pop()
+        })
+
+        if(categoryID) newProductForm.append("category", categoryID)
+
+        dispatch(addProduct(newProductForm))
     }
+
+    const loading = useMessageAndErrorOther(dispatch,navigation,"adminpanel")
 
     useEffect(()=>{
         if(route.params?.image)
@@ -50,116 +71,112 @@ const NewProduct = ({navigation , route}) => {
             >
                 <Text style={formHeading} >New Product</Text>
             </View>
+            
+            <ScrollView
+                style={{
+                    padding: 20,
+                    elevation: 10,
+                    borderRadius: 10,
+                    backgroundColor: colors.color3,
+                }}
+            >
+                <View
+                    style={{
+                        justifyContent: "center",
+                        height: 650,
+                    }}
+                >
 
-            {
-                loading ? <Loading /> : (
-                    <ScrollView
+                    <View
                         style={{
-                            padding: 20,
-                            elevation: 10,
-                            borderRadius: 10,
-                            backgroundColor: colors.color3,
+                            width: 80,
+                            height: 80,
+                            alignSelf: "center",
+                            marginBottom: 20,
                         }}
                     >
-                        <View
+                        <Avatar.Image
+                            size={80}
                             style={{
-                                justifyContent: "center",
-                                height: 650,
+                                backgroundColor: colors.color1
                             }}
+                            source={{
+                                uri: image ? image: null 
+                            }}
+                        />
+                        <TouchableOpacity
+                            onPress={()=> navigation.navigate("camera", {newProduct: true})}
                         >
-
-                            <View
+                            <Avatar.Icon
+                                icon={"camera"}
+                                size={30}
+                                color={colors.color3}
                                 style={{
-                                    width: 80,
-                                    height: 80,
-                                    alignSelf: "center",
-                                    marginBottom: 20,
+                                    backgroundColor: colors.color2,
+                                    position: "absolute",
+                                    bottom: 0,
+                                    right: -5,
                                 }}
-                            >
-                                <Avatar.Image
-                                    size={80}
-                                    style={{
-                                        backgroundColor: colors.color1
-                                    }}
-                                    source={{
-                                        uri: image ? image: null 
-                                    }}
-                                />
-                                <TouchableOpacity
-                                    onPress={()=> navigation.navigate("camera", {newProduct: true})}
-                                >
-                                    <Avatar.Icon
-                                        icon={"camera"}
-                                        size={30}
-                                        color={colors.color3}
-                                        style={{
-                                            backgroundColor: colors.color2,
-                                            position: "absolute",
-                                            bottom: 0,
-                                            right: -5,
-                                        }}
-                                    />
-                                </TouchableOpacity>
-                            </View>
-
-                            <TextInput
-                                {...inputOptions}
-                                placeholder="Name"
-                                value={name}
-                                onChangeText={setName}
                             />
+                        </TouchableOpacity>
+                    </View>
 
-                            <TextInput
-                                {...inputOptions}
-                                placeholder="Description"
-                                value={description}
-                                onChangeText={setDescription}
-                            />
-                            <TextInput
-                                {...inputOptions}
-                                placeholder="Price"
-                                keyboardType="number-pad"
-                                value={price}
-                                onChangeText={setPrice}
-                            />
-                            <TextInput
-                                {...inputOptions}
-                                placeholder="Stock"
-                                keyboardType= "number-pad"
-                                value={stock}
-                                onChangeText={setName}
-                            />
+                    <TextInput
+                        {...inputOptions}
+                        placeholder="Name"
+                        value={name}
+                        onChangeText={setName}
+                    />
 
-                            <Text
-                                style={{
-                                    ...inputStyle,
-                                    textAlign: "center",
-                                    borderRadius: 3,
-                                    textAlignVertical: "center",
-                                }}
-                                onPress={()=>setVisible(true)}
-                            >
-                                {category}
-                            </Text>
+                    <TextInput
+                        {...inputOptions}
+                        placeholder="Description"
+                        value={description}
+                        onChangeText={setDescription}
+                    />
+                    <TextInput
+                        {...inputOptions}
+                        placeholder="Price"
+                        keyboardType="number-pad"
+                        value={price}
+                        onChangeText={setPrice}
+                    />
+                    <TextInput
+                        {...inputOptions}
+                        placeholder="Stock"
+                        keyboardType= "number-pad"
+                        value={stock}
+                        onChangeText={setStock}
+                    />
 
-                            <Button
-                                textColor={colors.color2}
-                                style={{
-                                    backgroundColor: colors.color1,
-                                    margin: 20,
-                                    padding: 5,
-                                }}
-                                onPress={submitHandler}
-                                loading={loading}
-                                disabled={loading}
-                            >
-                                Create
-                            </Button>
+                    <Text
+                        style={{
+                            ...inputStyle,
+                            textAlign: "center",
+                            borderRadius: 3,
+                            textAlignVertical: "center",
+                        }}
+                        onPress={()=>setVisible(true)}
+                    >
+                        {category}
+                    </Text>
 
-                        </View>
-                    </ScrollView>
-                )
-            }
+                    <Button
+                        textColor={colors.color2}
+                        style={{
+                            backgroundColor: colors.color1,
+                            margin: 20,
+                            padding: 5,
+                        }}
+                        onPress={submitHandler}
+                        loading={loading}
+                        disabled={disableCondition || loading}
+                    >
+                        Create
+                    </Button>
+
+                </View>
+            </ScrollView>
         </View>
 
         <SelectComponent

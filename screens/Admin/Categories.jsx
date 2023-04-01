@@ -4,34 +4,29 @@ import { colors, defaultStyle, formHeading, inputOptions } from '../../styles/st
 import Header from '../../components/Header'
 import CategoryCard from '../../components/CategoryCard'
 import { Button, TextInput } from 'react-native-paper'
+import { useMessageAndErrorOther, useSetCategories } from '../../utils/hooks'
+import { useIsFocused } from '@react-navigation/native'
+import { useDispatch } from 'react-redux'
+import { addCategory, deleteCategory } from '../../redux/actions/otherActions'
 
-const categories = [
-  {
-    name: "Tie",
-    _id: "1"
-  },
-  {
-    name: "Tie",
-    _id: "2"
-  },
-  {
-    name: "Tie",
-    _id: "3"
-  },
-]
-
-const Categories = () => {
+const Categories = ({navigation}) => {
 
   const [category, setCategory] = useState("")
+  const [categories, setCategories] = useState([])
 
-  const loading = false
+  const dispatch = useDispatch()
+  const isFocused = useIsFocused()
+
+  useSetCategories(setCategories, isFocused)
+
+  const loading = useMessageAndErrorOther(dispatch,navigation,"adminpanel")
 
   const deleteHandler = (id)=>{
-      console.log("Deleting category with id: ", id);
+    dispatch(deleteCategory(id))
   }
 
   const submitHandler = () => {
-      
+      dispatch(addCategory(category))
   }
 
   return (
@@ -65,7 +60,7 @@ const Categories = () => {
                 {
                   categories.map((item)=>(
                     <CategoryCard
-                      name={item.name}
+                      name={item.category}
                       id={item._id}
                       key={item._id}
                       deleteHandler={deleteHandler}
@@ -93,6 +88,7 @@ const Categories = () => {
                 }} 
                 disabled={!category}
                 onPress={submitHandler}
+                loading={loading}
               >
                 Add
               </Button>
